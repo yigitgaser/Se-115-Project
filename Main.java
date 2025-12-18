@@ -131,5 +131,47 @@ public class Main {
         }
         return bestDay;
     }
+    public static String bestMonthForCommodity(String comm) {
+        int commIndex = getCommodityIndex(comm); // Getting the commoditi index with helper.
+        int bestProfit = -999999;// Very small number for changing
+        String bestMonth ="";//Creating the month variable
+        if(commIndex == -1){ //For invalid commoditie
+            return "INVALID_COMMODITY";
+        }
+        for(int m=0; m< MONTHS ; m++){ //Looping for months
+            int commProfit = 0; //Refreshing the sum
+            for(int d=0;d<DAYS;d++){//Looping for days
+                commProfit += allData[m][d][commIndex]; //Summing the wanting commodities profits
+            }
+            if (commProfit > bestProfit){ // Updating the variables
+                bestProfit = commProfit ;
+                bestMonth = months[m];
+            }
+        }
+        return bestMonth+""+bestProfit;
+    }
+    public static int consecutiveLossDays(String comm) {
+        int commIndex = getCommodityIndex(comm); // Getting the commoditi index with helper.
+        int maxStreak = 0;     // For maximum loss streak
+        int currentStreak = 0; // For refreshing the streak when it breaks
+        if(commIndex == -1){ //For invalid commoditie
+            return-1;
+        }
+        for (int m =0;m<MONTHS;m++){ //Looping for all months
+            for(int d=0;d<DAYS;d++){ //Looping for all days
+                if(allData[m][d][commIndex] < 0){
+                    currentStreak++; //Counting the streak
+                }
+                else if (currentStreak>maxStreak) { //Updating the streak
+                    maxStreak =currentStreak;
+                }
+                else{
+                    currentStreak =0; //Refreshing the streak
+                }
+
+            }
+        }
+        return  maxStreak;
+    }
 
    }
