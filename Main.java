@@ -174,4 +174,60 @@ public class Main {
         return  maxStreak;
     }
 
+    public static int daysAboveThreshold(String comm, int threshold) {
+        int commIndex = getCommodityIndex(comm); // Getting the commoditi index with helper.
+        if(commIndex == -1){ //For invalid commoditie
+            return-1;
+        }
+        int daysAbove =0;
+        for(int m =0; m<MONTHS;m++){ //Looping for all months
+            for(int d =0;d<DAYS;d++){  //Looping for all days
+                if (allData[m][d][commIndex] > threshold){
+                    daysAbove ++; //Counting the days
+                }
+            }
+        }
+        return daysAbove;
+    }
+
+
+    public static int biggestDailySwing(int month) {
+        int recordSwing = 0; // For changing
+        if (month < 0 || month >= MONTHS) {
+            return -1;
+        }
+        for(int d = 0;d<DAYS;d++){
+            int maxProfit = -9999999; // Very small number for changing
+            int minProfit = 999999999; // Very large number for changing;
+            for(int c =0;c<COMMS;c++){
+
+                if(allData[month][d][c] > maxProfit){
+                    maxProfit = allData[month][d][c];
+                }if (allData[month][d][c] < minProfit) {
+                    minProfit = allData[month][d][c];
+                }
+
+
+            }
+            int swing = maxProfit - minProfit;
+            if(swing > recordSwing){
+                recordSwing = swing;
+            }
+        }
+
+        return  recordSwing;
+    }
+
+    public static String compareTwoCommodities(String c1, String c2) {
+        return "DUMMY is better by 1234";
+    }
+
+    public static String bestWeekOfMonth(int month) {
+        return "DUMMY";
+    }
+
+    public static void main(String[] args) {
+        loadData();
+        System.out.println("Data loaded – ready for queries");
+    }
    }
