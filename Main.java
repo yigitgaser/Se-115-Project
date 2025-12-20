@@ -19,15 +19,19 @@ public class Main {
             try { //Because of java
                 File file = new File(fileName); //Finds the file
                 Scanner reader = new Scanner(file); //Reads the file
-                while (reader.hasNext()) {
+                while (reader.hasNextLine()) {
                     String line = reader.nextLine(); //Reads the lines
                     if (line.toLowerCase().startsWith("day") || line.trim().isEmpty()) {
                         continue;
                     } // Because of skipping data's first line
                     String[] data = line.split(",");//Divides the line by ,
-                    int day = Integer.parseInt(data[0]) - 1;//Turns string to integer. Days stars from 1 but array starts from 0
-                    int commIndex = -1;
-                    switch (data[1]) {
+                    if (data.length < 3) continue; // If date is missing it continues
+                    String dayStr = data[0].trim(); // If there is a space in data
+                    String commStr = data[1].trim();
+                    String profitStr = data[2].trim();
+                   int commIndex = -1;
+                   int day =  Integer.parseInt(dayStr) - 1;
+                    switch (commStr) {
                         case "Gold":
                             commIndex = 0;
                             break;
@@ -47,9 +51,10 @@ public class Main {
                             commIndex = -1; // If there is a mistake in data
                             break;
                     }
-                    int profit = Integer.parseInt(data[2]); //Identifying the profit
-                    if (day < DAYS && commIndex != -1) { //Assigning the profit to the array
+                    int profit = Integer.parseInt(profitStr); //Identifying the profit
+                    if (day >= 0 && day < DAYS && commIndex != -1) {
                         allData[m][day][commIndex] = profit;
+
                     }
                 }
                 reader.close(); //Closing the file
@@ -73,8 +78,8 @@ public class Main {
         if (month < 0 || month >=MONTHS){ //If user gives wrong number
             return "INVALID_MONTH";
         }
-        int maxProfit = -999999; // very small number for changing
-        int bestComm = -1;
+        int maxProfit = Integer.MIN_VALUE;
+        int bestComm = 0;
         for (int c=0; c<COMMS ; c++){  // Looping for each commoditie
             int currentProfit = 0;
             for(int d =0; d<DAYS; d++){  // Looping for each day for each commoditie
@@ -101,7 +106,7 @@ public class Main {
 
     public static int commodityProfitInRange(String commodity, int from, int to) {
         int commIndex = getCommodityIndex(commodity);//Using helper method for commIndex
-        if(commIndex == -1 || from <1 || from >DAYS || to <1 || to>DAYS){ //For wrong input
+        if(commIndex == -1 || from <1 || from >DAYS || to <1 || to>DAYS || from >to){ //For wrong input
             return -99999;
         }
         int totalProfit = 0;
@@ -117,7 +122,7 @@ public class Main {
         if(month<0 || month>=MONTHS){ // For wrong input
             return -1;
         }
-        int bestProfit = -999999; //Very wrong number for changing
+        int bestProfit = Integer.MIN_VALUE;
         int bestDay = -1; // Invalid day for changing
         for (int d=0; d<DAYS ; d++){ //Looping days for wanted month
             int profit = 0; //Equaling 0 for each day
@@ -133,7 +138,7 @@ public class Main {
     }
     public static String bestMonthForCommodity(String comm) {
         int commIndex = getCommodityIndex(comm); // Getting the commoditi index with helper.
-        int bestProfit = -999999;// Very small number for changing
+        int bestProfit = Integer.MIN_VALUE;
         String bestMonth ="";//Creating the month variable
         if(commIndex == -1){ //For invalid commoditie
             return "INVALID_COMMODITY";
@@ -148,7 +153,7 @@ public class Main {
                 bestMonth = months[m];
             }
         }
-        return bestMonth+""+bestProfit;
+        return bestMonth;
     }
     public static int consecutiveLossDays(String comm) {
         int commIndex = getCommodityIndex(comm); // Getting the commoditi index with helper.
@@ -157,21 +162,19 @@ public class Main {
         if(commIndex == -1){ //For invalid commoditie
             return-1;
         }
-        for (int m =0;m<MONTHS;m++){ //Looping for all months
-            for(int d=0;d<DAYS;d++){ //Looping for all days
-                if(allData[m][d][commIndex] < 0){
-                    currentStreak++; //Counting the streak
+        for (int m = 0; m < MONTHS; m++) { //Looping for every month
+            for (int d = 0; d < DAYS; d++) { // Looping for all days
+                if (allData[m][d][commIndex] < 0) { // Counting the lost days
+                    currentStreak++;
+                } else {
+                    if (currentStreak > maxStreak) maxStreak = currentStreak; //If it is not lost days , update the max streak and refresh the streak
+                    currentStreak = 0;
                 }
-                else if (currentStreak>maxStreak) { //Updating the streak
-                    maxStreak =currentStreak;
-                }
-                else{
-                    currentStreak =0; //Refreshing the streak
-                }
-
             }
         }
-        return  maxStreak;
+        if (currentStreak > maxStreak) maxStreak = currentStreak; //Updating the max streak if there is no gain days
+
+        return maxStreak;
     }
 
     public static int daysAboveThreshold(String comm, int threshold) {
@@ -192,38 +195,77 @@ public class Main {
 
 
     public static int biggestDailySwing(int month) {
-        int recordSwing = 0; // For changing
-        if (month < 0 || month >= MONTHS) {
-            return -1;
-        }
-        for(int d = 0;d<DAYS;d++){
-            int maxProfit = -9999999; // Very small number for changing
-            int minProfit = 999999999; // Very large number for changing;
-            for(int c =0;c<COMMS;c++){
 
-                if(allData[month][d][c] > maxProfit){
-                    maxProfit = allData[month][d][c];
-                }if (allData[month][d][c] < minProfit) {
-                    minProfit = allData[month][d][c];
-                }
-
-
-            }
-            int swing = maxProfit - minProfit;
-            if(swing > recordSwing){
-                recordSwing = swing;
-            }
+        if (month < 0 || month >= MONTHS) { //For invalid month
+            return -99999;
         }
 
-        return  recordSwing;
+        int maxSwing = 0;
+        for (int d = 1; d < DAYS; d++) { //Looping the days
+            int todayTotal = 0;
+            int prevTotal = 0;
+            for (int c = 0; c < COMMS; c++) {
+                prevTotal += allData[month][d-1][c]; // Calculating the previous days profit
+                todayTotal += allData[month][d][c]; //Calculating the current days profit
+            }
+
+            int diff = todayTotal - prevTotal;
+            if (diff < 0) diff = -diff; // For absolute
+
+            if (diff > maxSwing) maxSwing = diff; // Updating the max swing
+
+        }
+
+        return maxSwing;
     }
 
     public static String compareTwoCommodities(String c1, String c2) {
-        return "DUMMY is better by 1234";
+        int commIndex1 = getCommodityIndex(c1); // Getting the indexes with helper
+        int commIndex2 = getCommodityIndex(c2);
+        if(commIndex1==-1 || commIndex2 ==-1){ // For invalid index
+            return "INVALID_COMMODITY";
+        }
+        int profit1 =0;
+        int profit2 = 0;
+        for(int m=0; m<MONTHS; m++){ //looping all months
+            for(int d =0; d<DAYS; d++){ //Looping all days
+                profit1 += allData[m][d][commIndex1]; //Calculating profits
+                profit2 += allData[m][d][commIndex2];
+            }
+        }
+    if(profit1 > profit2){ // Comparing the profits
+     int diff = profit1 -profit2;
+     return c1 +" is better by "+diff;
+    } else if ( profit1 < profit2) {
+        int diff = profit2 -profit1;
+        return c2 +" is better by " + diff;
+    }
+    else{
+        return "Equal";
+    }
+
     }
 
     public static String bestWeekOfMonth(int month) {
-        return "DUMMY";
+        if(month <0 || month>=12){ // For invalid month
+            return "INVALID_MONTH";
+        }
+        int maxProfit = Integer.MIN_VALUE;
+        int bestWeek = -1; //Invalid week for changing
+        for(int w =1; w <5;w++){ //Looping the weeks
+            int startDay =(w-1) *7; //Calculating the weeks starting days (0,7,14,21)
+            int weakProfit =0;
+            for(int d = startDay;d <startDay + 7;d++){ //Looping the  days that in the weeks
+                for(int c =0; c<COMMS ; c++){ //Looping the commodities
+                    weakProfit += allData[month][d][c]; //Calculating the weeks profit
+                }
+            }
+            if(weakProfit > maxProfit){ //Updating the variables
+                maxProfit = weakProfit;
+                bestWeek = w;
+            }
+        }
+        return "Week " + bestWeek;
     }
 
     public static void main(String[] args) {
